@@ -1,6 +1,8 @@
 #coding=utf-8
 import sys,time,datetime,os,requests
 import urllib.request
+ 
+from pytesseract import *
 import pytesseract
 from PIL import Image
 from random import random
@@ -45,6 +47,7 @@ def openMainPage():
     print(f"statusCode = {responseRes.status_code}")
     print(f"text = {responseRes.text}")
     mafengwoSession.cookies.save()
+    return responseRes.text
 
 def openSecPage():
     openSecPageUrl = "http://vb66.auu97.com/"
@@ -62,6 +65,7 @@ def openSecPage():
     print(f"statusCode = {responseRes.status_code}")
     print(f"text = {responseRes.text}")
     mafengwoSession.cookies.save()
+    return responseRes.text
  
 def openSearchPage():
     openSearchPageUrl = "http://vb66.auu97.com/"
@@ -85,7 +89,10 @@ def openSearchPage():
     mafengwoSession.cookies.save()
     print(f"statusCode = {responseRes.status_code}")
     print(f"text = {responseRes.text}")
-    pageData=responseRes.text
+    return responseRes.text
+  
+
+def getLinkBySearchPage(pageData):
     proxyLink=pageData[pageData.index("<div class='b_line'></div>"):] 
     proxyLink=proxyLink[:proxyLink.index("</ul>")]    
     proxyLink=proxyLink[proxyLink.index("线路3"):proxyLink.index("线路4")] 
@@ -93,6 +100,8 @@ def openSearchPage():
     proxyLink=proxyLink[:proxyLink.index("\"")]                     
     print(proxyLink)
     return proxyLink
+
+
 
 def getLoginAuthPage(proxyLink):
     getLoginAuthPageUrl = proxyLink
@@ -110,20 +119,63 @@ def getLoginAuthPage(proxyLink):
     print(f"statusCode = {responseRes.status_code}")
     print(f"text = {responseRes.text}")
     mafengwoSession.cookies.save()
-    proxyLinkURI=proxyLink[proxyLink.index("//")+2:]
-    proxyLinkURI="http://"+proxyLinkURI[:proxyLinkURI.index("/")]
-    
-    getLoginAuthPageImage(proxyLinkURI)
-
-def downloadLoginAuthPageImage(loginAuthPageImageUrl):
+    return responseRes.text
+  
+def downloadLoginAuthPageImage(loginAuthPageImageUrl,fileName):
     r = requests.get(loginAuthPageImageUrl)
-    with open('./auth.jpg', 'wb') as f:
+    with open(fileName, 'wb') as f:
         f.write(r.content) 
- 
+  
+def transImage(FileName,gFilename,bFilename,path):    
+    threshold = 140  
+    table = []  
+    for i in range(256):  
+        if i < threshold:  
+            table.append(0)  
+        else:  
+            table.append(1)  
+    gryFilename=gFilename
+    blackFilename=bFilename
+    
+    if os.path.exists(gFilename):
+        gryFilename="new_"+gryFilename
+    if os.path.exists(blackFilename):
+        blackFilename="new_"+blackFilename
+    im = Image.open(FileName)  
+    imgry = im.convert('L')
+    imgry.save(gryFilename)  
+    out = imgry.point(table,'1')  
+    out.save(blackFilename)  
 
 
-def getLoginAuthPageImage(proxyLink):
-    getLoginAuthPageXMLUrl =proxyLink+ "/getCodeInfo/.auth?u=" + str(random()) + '&systemversion=' + "4_6_sp9" + "&.auth"
+
+def getTransImageFile(FileName):
+    transImage(FileName,gFilename,bFilename,path)
+    return ""+FileName
+
+
+def fixNumResault(Resault):
+    rep={'O':'0',  
+        'I':'1','L':'1',  
+        'Z':'2',  
+        'S':'8'  
+        }
+    text = Resault.strip()  
+    text = Resault.upper()
+    for r in rep:  
+        text = text.replace(r,rep[r])  
+    return text
+
+
+def decodeLoginAuthPageImage(loginAuthPageImageName):
+    image = Image.open(loginAuthPageImageName)
+    text = pytesseract.image_to_string(image, lang='eng',config='--psm 6 --oem 3 -c tessedit_char_whitelist=0123456789').strip()
+    print("text:"+text)
+    return text
+
+
+def getLoginAuthPageImageAuthCode(proxyLinkURI):
+    getLoginAuthPageXMLUrl =proxyLinkURI+ "/getCodeInfo/.auth?u=" + str(random()) + '&systemversion=' + "4_6_sp9" + "&.auth"
     print(getLoginAuthPageXMLUrl)
     getLoginAuthPageXMLHeaders = {
         'upgrade-insecure-requests': "1",
@@ -140,12 +192,19 @@ def getLoginAuthPageImage(proxyLink):
     print(f"statusCode = {responseRes.status_code}")
     print(f"text = {responseRes.text}")
     print("") 
-    t = responseRes.text.split("_")
-    loginAuthPageImageUrl= proxyLink+"/getVcode/.auth?t=" + t[0] + "&systemversion=" + "4_6_sp9" + "&.auth"
+    return responseRes.text
+
+
+def getLoginAuthPageImageAddrByAuthCode(authCode):
+    t = authCode.text.split("_")
+    loginAuthPageImageUrl= "/getVcode/.auth?t=" + t[0] + "&systemversion=" + "4_6_sp9" + "&.auth"
     print(loginAuthPageImageUrl)
+    return loginAuthPageImageUrl
     
-    downloadLoginAuthPageImage(loginAuthPageImageUrl)
-    numtext =pytesseract.image_to_string(Image.open("C:/Users/WangZhen/Documents/GitHub/autologinweb/auth.jpg"))
+    
+
+    numtext =decodeLoginAuthPageImage("auth.jpg")
+
     print("code is :"+numtext)
     print(numtext)
 
@@ -155,28 +214,24 @@ def getLoginAuthPageImage(proxyLink):
 
 
 def openProxyPage(proxyLink):
-    getLoginAuthPage(proxyLink)
-    
-   
-
- 
+    proxyLinkURI=proxyLink[proxyLink.index("//")+2:]
+    proxyLinkURI="http://"+proxyLinkURI[:proxyLinkURI.index("/")]
+    loginAuthPage=getLoginAuthPage(proxyLinkURI)
+    authCode=getLoginAuthPageImageAuthCode(proxyLinkURI)
+    imageAddr=getLoginAuthPageImageAddrByAuthCode(authCode)
+    downloadLoginAuthPageImage(imageAddr,"./auth.jpg")
+    return loginAuthPage
     
 def doLogin(account, password):
-    openMainPage()
-    openSecPage()
-    proxyLink=openSearchPage()
-    openProxyPage(proxyLink)
+    mainPage=openMainPage()
+    secPage=openSecPage()
+    searchPage=openSearchPage()
+    proxyLink=getLinkBySearchPage(searchPage)
+    proxyPage=openProxyPage(proxyLink)
 
 
-
-    
-    
-    
     
 
 if __name__ == "__main__":
     doLogin(" ", " ")
 
-
- 
- 
