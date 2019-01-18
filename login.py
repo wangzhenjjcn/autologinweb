@@ -1,5 +1,9 @@
 #coding=utf-8
 import sys,time,datetime,os,requests
+import urllib.request
+import pytesseract
+from PIL import Image
+from random import random
 
 try:
  
@@ -91,45 +95,69 @@ def openSearchPage():
     return proxyLink
 
 def getLoginAuthPage(proxyLink):
-    openSecPageUrl = proxyLink
+    getLoginAuthPageUrl = proxyLink
     getLoginAuthPageHeaders = {
         'upgrade-insecure-requests': "1",
         'dnt': "1",
         'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36",
         'accept': "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
-        'referer': "http://vst520.net/",
+        'referer': "http://vb66.auu97.com/",
         'accept-encoding': "gzip, deflate",
         'accept-language': "zh-CN,zh;q=0.9,en;q=0.8,zh-TW;q=0.7,ja;q=0.6",
         'cache-control': "no-cache"
         }
-    responseRes = mafengwoSession.get(openSecPageUrl, headers = getLoginAuthPageHeaders, allow_redirects = True)
+    responseRes = mafengwoSession.get(getLoginAuthPageUrl, headers = getLoginAuthPageHeaders, allow_redirects = True)
     print(f"statusCode = {responseRes.status_code}")
     print(f"text = {responseRes.text}")
     mafengwoSession.cookies.save()
-    postLoginAuthPage()
+    proxyLinkURI=proxyLink[proxyLink.index("//")+2:]
+    proxyLinkURI="http://"+proxyLinkURI[:proxyLinkURI.index("/")]
+    
+    getLoginAuthPageImage(proxyLinkURI)
+
+def downloadLoginAuthPageImage(loginAuthPageImageUrl):
+    r = requests.get(loginAuthPageImageUrl)
+    with open('./auth.jpg', 'wb') as f:
+        f.write(r.content) 
+ 
 
 
-
-
-def postLoginAuthPage():
+def getLoginAuthPageImage(proxyLink):
+    getLoginAuthPageXMLUrl =proxyLink+ "/getCodeInfo/.auth?u=" + str(random()) + '&systemversion=' + "4_6_sp9" + "&.auth"
+    print(getLoginAuthPageXMLUrl)
+    getLoginAuthPageXMLHeaders = {
+        'upgrade-insecure-requests': "1",
+        'dnt': "1",
+        'accept': "*/*",
+        'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36",
+        'referer': "http://pc5.g.nmnmnn.ninja/ssczx74883a/account/login.html.auth",
+        'accept-encoding': "gzip, deflate",
+        'accept-language': "zh-CN,zh;q=0.9,en;q=0.8,zh-TW;q=0.7,ja;q=0.6",
+        'cache-control': "no-cache"
+        }
+    responseRes = mafengwoSession.get(getLoginAuthPageXMLUrl, headers = getLoginAuthPageXMLHeaders, allow_redirects = True)
+    mafengwoSession.cookies.save()
+    print(f"statusCode = {responseRes.status_code}")
+    print(f"text = {responseRes.text}")
     print("") 
-    # print("") var ajax = new current_page.Ajax();
-    #         ajax.get("/getCodeInfo/.auth?u=" + Math.random() + '&systemversion=' + systemversion + '&.auth', function(xmlhttp) {
-    #             if (xmlhttp) {
-    #                 var t = xmlhttp.responseText.split("_");
-    #                 document.getElementById("img").innerHTML = "<img alt='請刷新' onerror='current_page.flag = false' title='如看不清，點擊刷新' onload='current_page.flag = false;current_page.getbk()' src='/getVcode/.auth?t=" + t[0] + '&systemversion=' + systemversion + "&.auth' />";
-    #                 document.getElementsByName("__VerifyValue")[0].value = t[1];
-    #                 var objx = document.getElementById("textActive");
-    #                 if(objx){
-    #                     current_page.time = (t[t.length-1]+"").replace(/\s+/g,"");
-    #                     objx.Time = current_page.time;
-    #                 }
-    #                 return;
+    t = responseRes.text.split("_")
+    loginAuthPageImageUrl= proxyLink+"/getVcode/.auth?t=" + t[0] + "&systemversion=" + "4_6_sp9" + "&.auth"
+    print(loginAuthPageImageUrl)
+    
+    downloadLoginAuthPageImage(loginAuthPageImageUrl)
+    numtext =pytesseract.image_to_string(Image.open("C:/Users/WangZhen/Documents/GitHub/autologinweb/auth.jpg"))
+    print("code is :"+numtext)
+    print(numtext)
+
+    current_page_time = (t[len(t)-1]+"").replace(" ","")
+    print(current_page_time)
+ 
+
 
 def openProxyPage(proxyLink):
     getLoginAuthPage(proxyLink)
     
-    print("")
+   
 
  
     
