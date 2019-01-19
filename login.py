@@ -301,8 +301,8 @@ def openProxyPage(proxyLink):
 
 # VerifyCode=46123
 # &__VerifyValue=e5698f2685ed8b3152e68ae04e52d53357b4Mzc2OTo1OTk5Mn5efn5efnY0NjEyMw
-# &__name=admina88
-# &password=Aa1471471!Z$
+# &__name= 
+# &password= !Z$
 # &isSec=0
 # &cid=1050033
 # &cname=联通
