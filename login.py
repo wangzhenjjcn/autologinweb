@@ -149,9 +149,10 @@ def transImage(FileName,gFilename,bFilename,path):
 
 
 
-def getTransImageFile(FileName):
-    transImage(FileName,gFilename,bFilename,path)
-    return ""+FileName
+def decodeImage(FileName,path):
+    transImage(FileName,"g_"+FileName,"b_"+FileName,path)
+    text=decodeLoginAuthPageImage(path+"b_"+FileName)
+    return text
 
 
 def fixNumResault(Resault):
@@ -202,15 +203,88 @@ def getLoginAuthPageImageAddrByAuthCode(authCode):
     return loginAuthPageImageUrl
     
     
-
-    numtext =decodeLoginAuthPageImage("auth.jpg")
-
-    print("code is :"+numtext)
-    print(numtext)
-
+def getLoginAuthPageTimeByAuthCode(authCode):  
+    t = authCode.text.split("_")
     current_page_time = (t[len(t)-1]+"").replace(" ","")
     print(current_page_time)
+    return current_page_time
+
+def getLoginAuthVerifyValueByAuthCode(authCode):  
+    t = authCode.text.split("_")
+    current_page_time = (t[len(t)-2]+"").replace(" ","")
+    print(current_page_time)
+    return current_page_time
+
+
+def getVerifyCodeByLoginAuthPage(loginAuthPage):
+    return ""
  
+def postLogin(proxyLink):
+    proxyLinkURI=proxyLink[proxyLink.index("//")+2:]
+    proxyLinkURI="http://"+proxyLinkURI[:proxyLinkURI.index("/")]
+    loginAuthPage=getLoginAuthPage(proxyLinkURI)
+    verifyCode=getVerifyCodeByLoginAuthPage(loginAuthPage)
+    authCode=getLoginAuthPageImageAuthCode(proxyLinkURI)
+    imageAddr=getLoginAuthPageImageAddrByAuthCode(authCode)
+    downloadLoginAuthPageImage(imageAddr,"./auth.jpg")
+    imageCode=fixNumResault(decodeImage("auth.jpg","./"))
+
+
+    #  <form id="login_form" action="http://54.64.37.20:5201/loginVerify/.auth" style="display: none" method="post" target="_blank">
+    #     <input type="hidden" name="VerifyCode" value="1111">
+    #     <input type="hidden" name="__name" value="1111" id="user_name">
+    #     <input type="hidden" name="__VerifyValue" value="1">
+    #     <input type="hidden" name="systemversion" value="1_0">
+    #     <input type="hidden" name="banbeng" value="1">
+    #     <input type="hidden" name="cname" value="tc">
+    #     <input type="hidden" name="password" value="000000">
+    #     <input type="hidden" name="cid" value="65">
+    #     <input type="hidden" name="loginType" value="1">
+    # </form>
+
+
+    # function loginForm (argument) {
+    #         var userName = document.getElementById("user_name"),tN;
+    #         while( !tN || tN > 900){
+    #             tN = tN = parseInt((+(new Date())-(Math.random())*10).toFixed(3).slice(-3).replace('.',''),10);
+    #         }
+    #         userName.value = 't' + parseInt(tN,10);
+    #         document.getElementById("login_form").submit();
+    #     }
+
+
+
+
+
+
+
+
+
+
+
+
+    loginURL = "http://pc5.g.nmnmnn.ninja/loginVerify/.auth"
+    loginURLheaders = {
+        'origin': "http://pc5.g.nmnmnn.ninja",
+        'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36",
+        'dnt': "1",
+        'content-type': "application/x-www-form-urlencoded;",
+        'accept': "*/*",
+        'referer': "http://pc5.g.nmnmnn.ninja/ssczx74883a/.auth",
+        'accept-encoding': "gzip, deflate",
+        'accept-language': "zh-CN,zh;q=0.9,en;q=0.8,zh-TW;q=0.7,ja;q=0.6",
+        'cache-control': "no-cache"
+        }
+
+    payload = "VerifyCode="+verifyCode+"&__VerifyValue="+VerifyValue+"&__name="+username+"&password=Aa1471471!Z$&isSec=0&cid=1050033&cname=èé&systemversion=4_6_sp9&"
+ 
+    responseRes = mafengwoSession.post(loginURL, data = payload, headers = loginURLheaders)
+    mafengwoSession.cookies.save()
+    print(f"statusCode = {responseRes.status_code}")
+    print(f"text = {responseRes.text}")
+    # 验证码已过期,请重新刷新。
+    return responseRes.text
+    
 
 
 def openProxyPage(proxyLink):
@@ -220,7 +294,25 @@ def openProxyPage(proxyLink):
     authCode=getLoginAuthPageImageAuthCode(proxyLinkURI)
     imageAddr=getLoginAuthPageImageAddrByAuthCode(authCode)
     downloadLoginAuthPageImage(imageAddr,"./auth.jpg")
+    imageCode=fixNumResault(decodeImage("auth.jpg","./"))
+    print(imageCode)
     return loginAuthPage
+
+
+# VerifyCode=46123
+# &__VerifyValue=e5698f2685ed8b3152e68ae04e52d53357b4Mzc2OTo1OTk5Mn5efn5efnY0NjEyMw
+# &__name=admina88
+# &password=Aa1471471!Z$
+# &isSec=0
+# &cid=1050033
+# &cname=联通
+# &systemversion=4_6_sp9&
+
+
+
+
+
+    
     
 def doLogin(account, password):
     mainPage=openMainPage()
