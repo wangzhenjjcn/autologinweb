@@ -264,6 +264,21 @@ def getValueByLoginAuthPage(loginAuthPage,value):
     return data
 
 
+def getSystemVersionByLoginAuthPage(loginAuthPage):
+    data=""
+    if "var systemversion" in loginAuthPage:
+        data=loginAuthPage[loginAuthPage.index("var systemversion"):]
+        data=data[data.index("\"")+1:]
+        data=data[:data.index("\"")]
+        return data
+    else:
+        return data
+    print(  data) 
+    return data
+
+
+
+
 def encodePassword(password):
     print("encodePassword:"+password)
     symbolMappingList = {'`' : '!V$', '-' : '!m$', '=' : '!k$', '[' : '!O$', ']' : '!K$', ';' : '!I$', '\'' : '!S$', '\\' : '!T$', '/' : '!r$', '.' : '!Z$', ',' : '!a$', '~' : '!i$', '!' : '!p$', '@' : '!f$', '#' : '!7$', '$' : '!D$', '%' : '!l$', '^' : '!9$', "&" : '!q$', '*' : '!t$', '(' : '!6$', ')' : '!g$', '_' : '!v$', '+' : '!J$', '{' : '!L$', '}' : '!d$', '|' : '!W$', '"' : '!E$', ':' : '!0$', '?' : '!H$', '>' : '!y$', '<' : '!b$' }
@@ -282,7 +297,7 @@ def encodePassword(password):
 
 
 
-def postLogin(proxyLink,username,pwd):
+def postLogin(proxyLink,username,pwd,line):
     print("postLogin:"+proxyLink) 
     print("username:"+username) 
     print("pwd:"+pwd) 
@@ -296,20 +311,23 @@ def postLogin(proxyLink,username,pwd):
     imageAddr=proxyLinkURI+getLoginAuthPageImageAddrByAuthCode(authCode)
     downloadLoginAuthPageImage(imageAddr,"./auth.jpg")
     imageCode=fixNumResault(decodeImage("auth.jpg","./"))
+    print("ImageCode:"+imageCode)
 
-
-
+    for c in imageCode:
+        if c.isdigit():
+            continue
+        else:
+            print("ERR  NOT NUM PIC  ERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR")
+            time.sleep(5)
+            return doLogin(username,pwd,line)
     verifyCode =imageCode
     verifyValue =getVerifyValueByAuthCode(authCode)
     cid =getValueByLoginAuthPage(loginAuthPage,"cid")
     cname =getValueByLoginAuthPage(loginAuthPage,"cname")
     print(cname)
-    systemversion = "4_6_sp9"
+    systemversion = getSystemVersionByLoginAuthPage(loginAuthPage)
     password=encodePassword(pwd)
-
- 
-
-    loginURL = proxyLinkURI.replace("http","https")+"/loginVerify/.auth"
+    loginURL = proxyLinkURI+"/loginVerify/.auth"
     loginURLheaders = {
         'origin': "http://pc5.g.nmnmnn.ninja",
         'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36",
@@ -331,8 +349,10 @@ def postLogin(proxyLink,username,pwd):
     postStr += "cid=" + cid + "&"
     postStr += "cname="+cname +"&"
     postStr += "systemversion=" + systemversion + "&"
+    postStr=postStr.strip()
+    print(loginURL)
     print(postStr)
-    responseRes = mafengwoSession.post(loginURL, data = postStr.encode('utf-8'), headers = loginURLheaders, 
+    responseRes = mafengwoSession.post(loginURL, data = postStr.encode('UTF-8'), headers = loginURLheaders, 
     verify=False )  
     mafengwoSession.cookies.save()
     print(f"statusCode = {responseRes.status_code}")
@@ -355,9 +375,9 @@ def doLogin(account, password,line):
     secPage=openSecPage()
     searchPage=openSearchPage()
     proxyLink=getLinkBySearchPage(searchPage,line)
-    proxyPage=postLogin(proxyLink,account,password)
+    proxyPage=postLogin(proxyLink,account,password,line)
     print(proxyPage)
-    testLogin(proxyLink)
+    # testLogin(proxyLink)
 
 if __name__ == "__main__":
     doLogin("", "",4)
