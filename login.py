@@ -1,12 +1,10 @@
 #coding=utf-8
 import sys,time,datetime,os,requests
-import urllib.request
- 
-from pytesseract import *
+
 import pytesseract
 from PIL import Image
 from random import random
-
+ 
 try:
  
     import cookielib
@@ -164,11 +162,6 @@ def transImage(FileName,gFilename,bFilename,path):
             table.append(1)  
     gryFilename=gFilename
     blackFilename=bFilename
-    
-    if os.path.exists(gFilename):
-        gryFilename="new_"+gryFilename
-    if os.path.exists(blackFilename):
-        blackFilename="new_"+blackFilename
     im = Image.open(FileName)  
     imgry = im.convert('L')
     imgry.save(gryFilename)  
@@ -262,7 +255,7 @@ def getValueByLoginAuthPage(loginAuthPage,value):
     if value in loginAuthPage:
         data=loginAuthPage[loginAuthPage.index("name=\""+value):]
         data=data[data.index("value=\"")+7:]
-        data=data[:data.index("\">")]
+        data=data[:data.index("\"")]
         print(data)
         return data
     else:
@@ -272,14 +265,17 @@ def getValueByLoginAuthPage(loginAuthPage,value):
 
 
 def encodePassword(password):
-    symbolMappingList = {'`' : '!V$', '-' : '!m$', '=' : '!k$', '[' : '!O$', ']' : '!K$', ';' : '!I$', '\'' : '!S$', '\\' : '!T$', '/' : '!r$', '.' : '!Z$', ',' : '!a$', '~' : '!i$', '!' : '!p$', '@' : '!f$', '#' : '!7$', '$' : '!D$', '%' : '!l$', '^' : '!9$', '&' : '!q$', '*' : '!t$', '(' : '!6$', ')' : '!g$', '_' : '!v$', '+' : '!J$', '{' : '!L$', '}' : '!d$', '|' : '!W$', '"' : '!E$', ':' : '!0$', '?' : '!H$', '>' : '!y$', '<' : '!b$' }
-    original_pwd = password.split('')
+    print("encodePassword:"+password)
+    symbolMappingList = {'`' : '!V$', '-' : '!m$', '=' : '!k$', '[' : '!O$', ']' : '!K$', ';' : '!I$', '\'' : '!S$', '\\' : '!T$', '/' : '!r$', '.' : '!Z$', ',' : '!a$', '~' : '!i$', '!' : '!p$', '@' : '!f$', '#' : '!7$', '$' : '!D$', '%' : '!l$', '^' : '!9$', "&" : '!q$', '*' : '!t$', '(' : '!6$', ')' : '!g$', '_' : '!v$', '+' : '!J$', '{' : '!L$', '}' : '!d$', '|' : '!W$', '"' : '!E$', ':' : '!0$', '?' : '!H$', '>' : '!y$', '<' : '!b$' }
+    original_pwd = password
     replace_pwd  = '' 
-    for   property1 in original_pwd :
-            if(original_pwd[property1]  in symbolMappingList.keys()   ) :
-                replace_pwd += symbolMappingList[original_pwd[property1]]
+    for   c in original_pwd :
+            if(c in symbolMappingList.keys()   ) :
+                print(symbolMappingList[c])
+                replace_pwd += symbolMappingList[c]
             else :
-                replace_pwd += original_pwd[property1]
+                replace_pwd += c
+    print(replace_pwd)
     return replace_pwd
             
 
@@ -288,6 +284,8 @@ def encodePassword(password):
 
 def postLogin(proxyLink,username,pwd):
     print("postLogin:"+proxyLink) 
+    print("username:"+username) 
+    print("pwd:"+pwd) 
     proxyLinkURI=proxyLink[proxyLink.index("//")+2:]
     proxyLinkURI="http://"+proxyLinkURI[:proxyLinkURI.index("/")]
     print("proxyLinkURI:"+proxyLinkURI) 
@@ -305,6 +303,7 @@ def postLogin(proxyLink,username,pwd):
     verifyValue =getVerifyValueByAuthCode(authCode)
     cid =getValueByLoginAuthPage(loginAuthPage,"cid")
     cname =getValueByLoginAuthPage(loginAuthPage,"cname")
+    print(cname)
     systemversion = "4_6_sp9"
     password=encodePassword(pwd)
 
@@ -317,30 +316,38 @@ def postLogin(proxyLink,username,pwd):
         'dnt': "1",
         'content-type': "application/x-www-form-urlencoded;",
         'accept': "*/*",
-        'referer': "http://pc5.g.nmnmnn.ninja/ssczx74883a/.auth",
+        'referer': "http://pc5.g.nmnmnn.ninja/ssczx74883a/account/login.html.auth",
         'accept-encoding': "gzip, deflate",
         'accept-language': "zh-CN,zh;q=0.9,en;q=0.8,zh-TW;q=0.7,ja;q=0.6",
         'cache-control': "no-cache"
         }
 
     postStr = ""
-    postStr += "VerifyCode=" + verifyCode + '&'
-    postStr += "__VerifyValue=" + verifyValue + '&'
-    postStr += "__name=" + username + '&'
-    postStr += "password=" + password  + '&'
-    postStr += "isSec=0" + '&'
-    postStr += "cid=" + cid + '&'
-    postStr += "cname=" + cname + '&'
-    postStr += "systemversion=" + systemversion + '&'
-
-    responseRes = mafengwoSession.post(loginURL, data = postStr, headers = loginURLheaders)
+    postStr += "VerifyCode=" + verifyCode + "&"
+    postStr += "__VerifyValue=" + verifyValue + "&"
+    postStr += "__name=" + username + "&"
+    postStr += "password=" + password  + "&"
+    postStr += "isSec=0&"
+    postStr += "cid=" + cid + "&"
+    postStr += "cname="+cname +"&"
+    postStr += "systemversion=" + systemversion + "&"
+    print(postStr)
+    responseRes = mafengwoSession.post(loginURL, data = postStr.encode('utf-8'), headers = loginURLheaders, 
+    verify=False )  
     mafengwoSession.cookies.save()
     print(f"statusCode = {responseRes.status_code}")
     print(f"text = {responseRes.text}")
     # 验证码已过期,请重新刷新。
     return responseRes.text
    
-   
+def testLogin(proxyLink):
+    testLogin("testLogin:"+proxyLink) 
+    proxyLinkURI=proxyLink[proxyLink.index("//")+2:]
+    proxyLinkURI="http://"+proxyLinkURI[:proxyLinkURI.index("/")]
+    testURL="http://pc5.g.nmnmnn.ninja/ssczx74883a/login/87c5896663_rdsess/k"
+
+
+
     
 def doLogin(account, password,line):
     print("doLogin:"+account+"  "+password) 
@@ -350,9 +357,8 @@ def doLogin(account, password,line):
     proxyLink=getLinkBySearchPage(searchPage,line)
     proxyPage=postLogin(proxyLink,account,password)
     print(proxyPage)
-
-    
+    testLogin(proxyLink)
 
 if __name__ == "__main__":
-    doLogin(" ", " ",4)
+    doLogin("", "",4)
 
