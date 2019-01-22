@@ -53,7 +53,7 @@ def openMainPage():
         }
     responseRes = mafengwoSession.get(mainPageurl,  headers = mainPageheaders)
     print(f"statusCode = {responseRes.status_code}")
-    print(f"text = {responseRes.text}")
+    # print(f"text = {responseRes.text}")
     mafengwoSession.cookies.save()
     return responseRes.text
 
@@ -73,7 +73,7 @@ def openSecPage():
         }
     responseRes = mafengwoSession.get(openSecPageUrl, headers = openSecPageHeaders, allow_redirects = False)
     print(f"statusCode = {responseRes.status_code}")
-    print(f"text = {responseRes.text}")
+    # print(f"text = {responseRes.text}")
     mafengwoSession.cookies.save()
     return responseRes.text
  
@@ -97,10 +97,10 @@ def openSearchPage():
         "code": "0z29w",
         "submit_bt": "搜索",
     }
-    responseRes = mafengwoSession.post(openSearchPageUrl, data = postData, headers = openSearchPageheaders)
+    responseRes = mafengwoSession.post(openSearchPageUrl, data = postData, headers = openSearchPageheaders,verify=False )
     mafengwoSession.cookies.save()
     print(f"statusCode = {responseRes.status_code}")
-    print(f"text = {responseRes.text}")
+    # print(f"text = {responseRes.text}")
     return responseRes.text
   
 
@@ -127,7 +127,6 @@ def getLinkBySearchPage(pageData,line):
 
 def getLoginAuthPage(proxyLink):
     print("getLoginAuthPage"+proxyLink)
-    print("YouAreFindding This:>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
     getLoginAuthPageUrl = proxyLink
     getLoginAuthPageHeaders = {
         'upgrade-insecure-requests': "1",
@@ -139,9 +138,9 @@ def getLoginAuthPage(proxyLink):
         'accept-language': "zh-CN,zh;q=0.9,en;q=0.8,zh-TW;q=0.7,ja;q=0.6",
         'cache-control': "no-cache"
         }
-    responseRes = mafengwoSession.get(getLoginAuthPageUrl, headers = getLoginAuthPageHeaders, allow_redirects = True)
+    responseRes = mafengwoSession.get(getLoginAuthPageUrl, headers = getLoginAuthPageHeaders, allow_redirects = True,verify=False )
     print(f"statusCode = {responseRes.status_code}")
-    print(f"text = {responseRes.text}")
+    # print(f"text = {responseRes.text}")
     mafengwoSession.cookies.save()
     return responseRes.text
   
@@ -178,7 +177,7 @@ def decodeImage(FileName,path):
 
 
 def fixNumResault(Resault):
-    print("fixNumResault"+Resault)
+    print("tofixNum:"+Resault)
     rep={'O':'0',  
         'I':'1','L':'1',  
         'Z':'2',  
@@ -187,7 +186,8 @@ def fixNumResault(Resault):
     text = Resault.strip()  
     text = Resault.upper()
     for r in rep:  
-        text = text.replace(r,rep[r])  
+        text = text.replace(r,rep[r]) 
+    print("fixedNumResault:"+text) 
     return text
 
 
@@ -213,10 +213,10 @@ def getLoginAuthPageImageAuthCode(proxyLinkURI):
         'accept-language': "zh-CN,zh;q=0.9,en;q=0.8,zh-TW;q=0.7,ja;q=0.6",
         'cache-control': "no-cache"
         }
-    responseRes = mafengwoSession.get(getLoginAuthPageXMLUrl, headers = getLoginAuthPageXMLHeaders, allow_redirects = True)
+    responseRes = mafengwoSession.get(getLoginAuthPageXMLUrl, headers = getLoginAuthPageXMLHeaders, allow_redirects = True,verify=False )
     mafengwoSession.cookies.save()
     print(f"statusCode = {responseRes.status_code}")
-    print(f"text = {responseRes.text}")
+    # print(f"text = {responseRes.text}")
     print("") 
     return responseRes.text
 
@@ -242,21 +242,22 @@ def getLoginAuthPageTimeByAuthCode(authCode):
     print(current_page_time)
     return current_page_time
 
-def getLoginAuthVerifyValueByAuthCode(authCode):  
-    print("getLoginAuthVerifyValueByAuthCode:"+authCode) 
-    t = authCode.split("_")
-    current_page_time = (t[len(t)-2]+"").replace(" ","")
-    print(current_page_time)
-    return current_page_time
+# def getLoginAuthVerifyValueByAuthCode(authCode):  
+#     print("getLoginAuthVerifyValueByAuthCode:"+authCode) 
+#     t = authCode.split("_")
+#     current_page_time = (t[len(t)-2]+"").replace(" ","")
+#     print(current_page_time)
+#     return current_page_time
 
 
 def getValueByLoginAuthPage(loginAuthPage,value):
+    print("getValueByLoginAuthPage:"+value)
     data=""
     if value in loginAuthPage:
         data=loginAuthPage[loginAuthPage.index("name=\""+value):]
         data=data[data.index("value=\"")+7:]
         data=data[:data.index("\"")]
-        print(data)
+        print(value+":"+data)
         return data
     else:
         return data
@@ -273,7 +274,7 @@ def getSystemVersionByLoginAuthPage(loginAuthPage):
         return data
     else:
         return data
-    print(  data) 
+    print(data) 
     return data
 
 
@@ -282,10 +283,10 @@ def getSystemVersionByLoginAuthPage(loginAuthPage):
 def encodePassword(password):
     print("encodePassword:"+password)
     symbolMappingList = {'`' : '!V$', '-' : '!m$', '=' : '!k$', '[' : '!O$', ']' : '!K$', ';' : '!I$', '\'' : '!S$', '\\' : '!T$', '/' : '!r$', '.' : '!Z$', ',' : '!a$', '~' : '!i$', '!' : '!p$', '@' : '!f$', '#' : '!7$', '$' : '!D$', '%' : '!l$', '^' : '!9$', "&" : '!q$', '*' : '!t$', '(' : '!6$', ')' : '!g$', '_' : '!v$', '+' : '!J$', '{' : '!L$', '}' : '!d$', '|' : '!W$', '"' : '!E$', ':' : '!0$', '?' : '!H$', '>' : '!y$', '<' : '!b$' }
-    original_pwd = password
+    original_pwd = password.strip()
     replace_pwd  = '' 
     for   c in original_pwd :
-            if(c in symbolMappingList.keys()   ) :
+            if(c in symbolMappingList.keys()) :
                 print(symbolMappingList[c])
                 replace_pwd += symbolMappingList[c]
             else :
@@ -304,9 +305,7 @@ def postLogin(proxyLink,username,pwd,line):
     proxyLinkURI=proxyLink[proxyLink.index("//")+2:]
     proxyLinkURI="http://"+proxyLinkURI[:proxyLinkURI.index("/")]
     print("proxyLinkURI:"+proxyLinkURI) 
-    loginAuthPage=getLoginAuthPage(proxyLink)
-    
-    
+    loginAuthPage=getLoginAuthPage(proxyLink)    
     authCode=getLoginAuthPageImageAuthCode(proxyLinkURI)
     imageAddr=proxyLinkURI+getLoginAuthPageImageAddrByAuthCode(authCode)
     downloadLoginAuthPageImage(imageAddr,"./auth.jpg")
@@ -324,7 +323,6 @@ def postLogin(proxyLink,username,pwd,line):
     verifyValue =getVerifyValueByAuthCode(authCode)
     cid =getValueByLoginAuthPage(loginAuthPage,"cid")
     cname =getValueByLoginAuthPage(loginAuthPage,"cname")
-    print(cname)
     systemversion = getSystemVersionByLoginAuthPage(loginAuthPage)
     password=encodePassword(pwd)
     loginURL = proxyLinkURI+"/loginVerify/.auth"
@@ -344,14 +342,15 @@ def postLogin(proxyLink,username,pwd,line):
     postStr += "VerifyCode=" + verifyCode + "&"
     postStr += "__VerifyValue=" + verifyValue + "&"
     postStr += "__name=" + username + "&"
-    postStr += "password=" + password  + "&"
+    postStr += "password=" + password  + "&"  
     postStr += "isSec=0&"
     postStr += "cid=" + cid + "&"
     postStr += "cname="+cname +"&"
     postStr += "systemversion=" + systemversion + "&"
+
     postStr=postStr.strip()
     print(loginURL)
-    print(postStr)
+    print(postStr.encode('UTF-8'))
     responseRes = mafengwoSession.post(loginURL, data = postStr.encode('UTF-8'), headers = loginURLheaders, 
     verify=False )  
     mafengwoSession.cookies.save()
@@ -380,5 +379,5 @@ def doLogin(account, password,line):
     # testLogin(proxyLink)
 
 if __name__ == "__main__":
-    doLogin("", "",4)
+    doLogin("admin88", "Aa1471471.",4)
 
